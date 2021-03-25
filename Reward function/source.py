@@ -209,6 +209,10 @@ def reward_function(params):
     
     if progress == 100:
         reward += 100.0
+
+    if progress == 100 and steps <= 260:
+        reward += 100.0
+
     
     return float(reward)
 
