@@ -2,7 +2,8 @@ class Reward:
     def __init__(self, active_logs = False):
         self.active_logs = active_logs
 
-    def calc_min_distance_from_closest_point(self, curr_x, curr_y, racing_lines_coords, continueIndex = 999):
+    # region Racing Lines
+    def calc_min_distance_from_closest_racing_line_point(self, curr_x, curr_y, racing_lines_coords, continueIndex = 999):
         # Calculate distance d²=(x1-x2)² + (y1-y2)²
         min_distance_from_current_coord = math.inf
         index_min_distance_from_current_coord = 0
@@ -14,36 +15,23 @@ class Reward:
                 min_distance_from_current_coord = distance
                 index_min_distance_from_current_coord = index
 
-        return {"index": index_min_distance_from_current_coord, "distance": min_distance_from_current_coord, "speed": racing_lines_coords[index_min_distance_from_current_coord][2], "radius": racing_lines_coords[index_min_distance_from_current_coord][3], "angel": racing_lines_coords[index_min_distance_from_current_coord][4]}
-
+        return {"index": index_min_distance_from_current_coord,
+                "distance": min_distance_from_current_coord,
+                "speed": racing_lines_coords[index_min_distance_from_current_coord][2],
+                "radius": racing_lines_coords[index_min_distance_from_current_coord][3]}
+    #endregion
 
     def reward_function(self, params):
         # Read input parameters
         all_wheels_on_track = params["all_wheels_on_track"]  # flag to indicate if the agent is on the track
         x = params["x"]  # agent's x-coordinate in meters
         y = params["y"]  # agent's y-coordinate in meters
-        closest_objects = params["closest_objects"]  # zero-based indices of the two closest objects to the agent's
-        closest_waypoints = params["closest_waypoints"]  # indices of the two nearest waypoints.
-        distance_from_center = params["distance_from_center"]  # distance in meters from the track center
-        is_crashed = params["is_crashed"]  # Boolean flag to indicate whether the agent has crashed.
-        is_left_of_center = params["is_left_of_center"]  # Flag to indicate if the agent is on the left side to the
-        is_offtrack = params["is_offtrack"]  # Boolean flag to indicate whether the agent has gone off track
-        is_reversed = params["is_reversed"]  # flag to indicate if the agent is driving clockwise (True) or
         heading = params["heading"]  # agent's yaw in degrees
-        objects_distance = params["objects_distance"]  # list of the objects' distances in meters between 0 and
-        objects_heading = params["objects_heading"]  # list of the objects' headings in degrees between -180 and 180
-        objects_left_of_center = params["objects_left_of_center"]  # list of Boolean flags indicating whether elements' objects
-        objects_location = params["objects_location"]  # list of object locations [(x,y) ...].
-        objects_speed = params["objects_speed"]  # list of the objects' speeds in meters per second.
         progress = params["progress"]  # percentage of track completed
         speed = params["speed"]  # agent's speed in meters per second (m/s)
-        steering_angle = abs(params["steering_angle"])  # agent's steering angle in degrees
         steps = params["steps"]  # number steps completed
-        track_length = params["track_length"]  # track length in meters.
-        track_width = params["track_width"]  # width of the track
-        waypoints = params["waypoints"]  # list of (x,y) as milestones along the track center
 
-        # Read all 155 track coordinates (x,y) after racing lines optimization (after 850 iterations). Including optimal speed, the radius in each point and the angel in deggres (s,r,d).
+        #region Read all 155 track coordinates (x,y) after racing lines optimization (after 850 iterations). Including optimal speed, the radius in each point and the angel in deggres (s,r,d).
         racing_lines_coords = [[0.58102712, 2.81034401, 1.1344657332557149, 999, 0.009463266929570712],
         [0.58429556, 2.68967924, 1.129097163622659, 999, 0.009463266929570712],
         [0.5978948,
@@ -787,13 +775,14 @@ class Reward:
         1.250454389421412,
         7.582407482200938],
         [0.58102712, 2.81034401, 1.1344657332557149, 999, 0.009463266929570712]]
+        #endregion
 
         # Define the default reward
         reward = 1e-3
 
         # Calculate two point with the min distance from the racing lines coords
-        first_min_distance_obj = self.calc_min_distance_from_closest_point(x, y, racing_lines_coords)
-        second_min_distance_obj = self.calc_min_distance_from_closest_point(x, y, racing_lines_coords, first_min_distance_obj["index"])
+        first_min_distance_obj = self.calc_min_distance_from_closest_racing_line_point(x, y, racing_lines_coords)
+        second_min_distance_obj = self.calc_min_distance_from_closest_racing_line_point(x, y, racing_lines_coords, first_min_distance_obj["index"])
 
         # Calculate the differance between the current speed of the car to the optimal speed in the closest racing line point
         speed_diff = abs(first_min_distance_obj["speed"] - speed)
